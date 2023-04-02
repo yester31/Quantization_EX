@@ -1,6 +1,12 @@
 data
 model
 
+.vs
+Engine
+x64
+Debug
+.idea
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

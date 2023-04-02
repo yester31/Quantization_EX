@@ -22,12 +22,15 @@ model_filename = 'resnet_cifar10_e100_mse.pth'
 model = load_model(model, model_filename, device)
 model = model.to(device)  # to gpu
 
+new_model_filename = 'resnet_cifar10_e100_mse_qat.pth'
 num_epochs = 10
-model = train_model(model=model, train_loader=train_loader, test_loader=test_loader, device=device, learning_rate=1e-3,
+
+if 0:
+    model = train_model(model=model, train_loader=train_loader, test_loader=test_loader, device=device, learning_rate=1e-3,
                     num_epochs=num_epochs)
 
-new_model_filename = 'resnet_cifar10_e100_mse_qat.pth'
-save_model(model, new_model_filename)
+    save_model(model, new_model_filename)
+
 model = load_model(model, new_model_filename, device)
 
 model.eval()

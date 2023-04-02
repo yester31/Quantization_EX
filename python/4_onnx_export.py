@@ -30,7 +30,6 @@ quant_nn.TensorQuantizer.use_fb_fake_quant = True
 
 dummy_input = torch.randn(256, 3, 32, 32, device=device)
 
-
 # enable_onnx_checker needs to be disabled. See notes below.
 export_model_path = "model/resnet_cifar10_e100_mse_qat.onnx"
 

@@ -38,7 +38,7 @@ def main():
     model = load_model(model, model_filename, device)
 
     eval_loss, eval_accuracy = evaluate_model(model=model, test_loader=test_loader, device=device, criterion=None)
-    print("Epoch: {:03d} Eval Loss: {:.3f} Eval Acc: {:.3f}".format(0, eval_loss, eval_accuracy))
+    print("Eval Loss: {:.3f} Eval Acc: {:.3f}".format(eval_loss, eval_accuracy))
 
 if __name__ == '__main__':
     main()

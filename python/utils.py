@@ -200,12 +200,21 @@ def evaluate_model(model, test_loader, device, criterion=None, time_check=False)
     iteration = 0
     for inputs, labels in test_loader:
 
+        if (iteration == 0):
+            if os.path.isfile('data/testset_input1.bin') == False:
+                inputs.cpu().detach().numpy().tofile('data/testset_input1.bin')
+
         inputs = inputs.to(device)
         labels = labels.to(device)
         begin = time.time()
         outputs = model(inputs)
         dur = time.time() - begin
         dur_time += dur
+
+        if (iteration == 0):
+            if os.path.isfile('data/torch_output.bin') == False:
+                outputs.cpu().detach().numpy().tofile('data/torch_output.bin')
+
         iteration += 1
         _, preds = torch.max(outputs, 1)
 
@@ -221,9 +230,36 @@ def evaluate_model(model, test_loader, device, criterion=None, time_check=False)
     if time_check :
         print(f'batch_size : {test_loader.batch_size}')
         print(f'{iteration}th iteration time : {dur_time} [sec]')
-        print(f'Average fps : {test_loader.batch_size/(dur_time/iteration)} [fps]')
-        print(f'Average inference time : {((dur_time/iteration)/test_loader.batch_size)*1000} [msec]')
+        print(f'Average fps : {test_loader.batch_size * iteration/ dur_time} [fps]')
+        print(f'Average inference time : {(dur_time*1000)/(test_loader.batch_size * iteration)} [msec]')
     eval_loss = running_loss / len(test_loader.dataset)
     eval_accuracy = running_corrects / len(test_loader.dataset)
 
     return eval_loss, eval_accuracy
+
+def compare_two_tensor(output, output_c):
+    if len(output) != len(output_c):
+        print("Tensor size is not same : output_py=%d  output_c=%d" % (len(output), len(output_c)))
+        exit()
+
+    max_idx = -1
+    max_diff = 0
+    cnt_diff = 0
+    r0 = 0
+    r = 0
+    for idx in range(len(output)):
+        if output[idx] != output_c[idx]:
+            cnt_diff += 1
+            diff = abs(output[idx] - output_c[idx])
+            if diff > max_diff:
+                max_diff = diff
+                max_idx = idx
+                r0 = output[idx]
+                r = output_c[idx]
+            print("%6d output_py=%10.6f output_c=%10.6f diff=%.6f" % (idx, output[idx], output_c[idx], diff))
+    if max_diff > 0:
+        print("cnt_total=%d cnt_diff=%d max_idx=%6d output_py=%10.6f output_c=%10.6f diff=%.6f" % (
+        len(output), cnt_diff, max_idx, r0, r, max_diff))
+    else:
+        print("All data is same!")
+
