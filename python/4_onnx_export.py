@@ -42,3 +42,5 @@ torch.onnx.export(model,  # pytorch model
 
 onnx_model = onnx.load(export_model_path)
 onnx.checker.check_model(onnx_model)
+
+

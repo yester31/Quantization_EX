@@ -202,7 +202,8 @@ def evaluate_model(model, test_loader, device, criterion=None, time_check=False)
 
         if (iteration == 0):
             if os.path.isfile('data/testset_input1.bin') == False:
-                inputs.cpu().detach().numpy().tofile('data/testset_input1.bin')
+                inputs.numpy().tofile('data/testset_input1.bin')
+                print('file generation done data/testset_input1.bin')
 
         inputs = inputs.to(device)
         labels = labels.to(device)
@@ -214,6 +215,7 @@ def evaluate_model(model, test_loader, device, criterion=None, time_check=False)
         if (iteration == 0):
             if os.path.isfile('data/torch_output.bin') == False:
                 outputs.cpu().detach().numpy().tofile('data/torch_output.bin')
+                print('file generation done data/torch_output.bin')
 
         iteration += 1
         _, preds = torch.max(outputs, 1)

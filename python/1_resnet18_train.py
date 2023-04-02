@@ -11,10 +11,10 @@ if not os.path.exists('data'):
     os.makedirs('data')
     print('make directory {} is done'.format('./data'))
 
+set_random_seeds(random_seed=777)
+device = device_check()  # device check & define
+# device = torch.device("cpu:0")
 def main():
-    set_random_seeds(random_seed=777)
-    device = device_check()  # device check & define
-    # device = torch.device("cpu:0")
 
     # 1. model generation
     model = torchvision.models.resnet18(pretrained=True)
@@ -40,5 +40,31 @@ def main():
     eval_loss, eval_accuracy = evaluate_model(model=model, test_loader=test_loader, device=device, criterion=None)
     print("Eval Loss: {:.3f} Eval Acc: {:.3f}".format(eval_loss, eval_accuracy))
 
+def model_onnx_export():
+
+    # 1. model generation
+    model = torchvision.models.resnet18(pretrained=True)
+    model.fc = nn.Linear(model.fc.in_features, 10)
+    model = model.to(device)              # to gpu
+
+    model_filename = 'resnet_cifar10_e100.pth'
+    model = load_model(model, model_filename, device)
+
+    # enable_onnx_checker needs to be disabled. See notes below.
+    export_model_path = "model/resnet_cifar10_e100.onnx"
+
+    dummy_input = torch.randn(256, 3, 32, 32, device=device)
+
+    torch.onnx.export(model,  # pytorch model
+                      dummy_input,  # model dummy input
+                      export_model_path,  # onnx model path
+                      opset_version=17,  # the version of the opset
+                      input_names=['input'],  # input name
+                      output_names=['output'])  # output name
+
+    onnx_model = onnx.load(export_model_path)
+    onnx.checker.check_model(onnx_model)
+
 if __name__ == '__main__':
     main()
+    model_onnx_export()

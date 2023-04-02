@@ -17,9 +17,10 @@ const char* INPUT_BLOB_NAME = "input";      // use same input name with onnx mod
 const char* OUTPUT_BLOB_NAME = "output";    // use same output name with onnx model
 const char* engine_dir_path = "../Engine";  // Engine directory path
 const char* engineFileName = "resnet18";    // model name
-const char* onnx_file = "../../python/model/resnet_cifar10_e100_mse_qat.onnx"; // onnx model file path
+const char* onnx_file = "../../python/model/resnet_cifar10_e100_mse_qat.onnx"; // Pytorch Quantization model onnx file path (only precision_mode = 8)
+//const char* onnx_file = "../../python/model/resnet_cifar10_e100.onnx"; // Pytorch model onnx file path
 bool serialize = false;                     // force serialize flag (IF true, recreate the engine file unconditionally)
-uint64_t iter_count = 40;                // the number of test iterations
+uint64_t iter_count = 40;                   // the number of test iterations
 
 // Creat the engine using onnx.
 void createEngineFromOnnx(int maxBatchSize, IBuilder* builder, IBuilderConfig* config, DataType dt, char* engine_file_path);
@@ -99,20 +100,20 @@ int main()
     CHECK(cudaMalloc(&buffers[outputIndex], maxBatchSize * OUTPUT_SIZE * sizeof(float)));
 
     // 4) prepare input data (test dataset first intput)
-    std::string img_dir = "../../python/data/";
-    std::vector<std::string> file_names;
-    if (SearchFile(img_dir.c_str(), file_names) < 0) { // load input data
-        std::cerr << "[ERROR] Data search error" << std::endl;
-    }
-    else {
-        std::cout << "Total number of images : " << file_names.size() << std::endl << std::endl;
-    }
+    //std::string img_dir = "../../python/data/";
+    //std::vector<std::string> file_names;
+    //if (SearchFile(img_dir.c_str(), file_names) < 0) { // load input data
+    //    std::cerr << "[ERROR] Data search error" << std::endl;
+    //}
+    //else {
+    //    std::cout << "Total number of images : " << file_names.size() << std::endl << std::endl;
+    //}
 
+    std::string file_names = "../../python/data/testset_input1.bin";
     std::vector<float> input(maxBatchSize * INPUT_H * INPUT_W * INPUT_C);
     std::vector<float> outputs(maxBatchSize * OUTPUT_SIZE);
-    for (int idx = 0; idx < file_names.size(); idx++) {
-        fromfile(input, file_names[idx]);
-    }
+    fromfile(input, file_names);
+
     std::cout << "===== input load done =====" << std::endl << std::endl;
 
     uint64_t dur_time = 0;
