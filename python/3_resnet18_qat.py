@@ -18,11 +18,11 @@ model.fc = nn.Linear(model.fc.in_features, 10)
 train_loader, test_loader = prepare_dataloader(num_workers=0, train_batch_size=256, eval_batch_size=256)
 
 # weight load
-model_filename = 'resnet_cifar10_e100_mse.pth'
+model_filename = 'resnet18_cifar10_e100_mse.pth'
 model = load_model(model, model_filename, device)
 model = model.to(device)  # to gpu
 
-new_model_filename = 'resnet_cifar10_e100_mse_qat.pth'
+new_model_filename = 'resnet18_cifar10_e100_mse_qat.pth'
 num_epochs = 10
 
 if 0:

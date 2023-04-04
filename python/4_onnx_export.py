@@ -20,7 +20,7 @@ model.fc = nn.Linear(model.fc.in_features, 10)
 train_loader, test_loader = prepare_dataloader(num_workers=0, train_batch_size=256, eval_batch_size=256)
 
 # weight load
-model_filename = 'resnet_cifar10_e100_mse_qat.pth'
+model_filename = 'resnet18_cifar10_e100_mse_qat.pth'
 model = load_model(model, model_filename, device)
 model = model.to(device)  # to gpu
 model.eval()
@@ -31,7 +31,7 @@ quant_nn.TensorQuantizer.use_fb_fake_quant = True
 dummy_input = torch.randn(256, 3, 32, 32, device=device)
 
 # enable_onnx_checker needs to be disabled. See notes below.
-export_model_path = "model/resnet_cifar10_e100_mse_qat.onnx"
+export_model_path = "model/resnet18_cifar10_e100_mse_qat.onnx"
 
 torch.onnx.export(model,  # pytorch model
                   dummy_input,  # model dummy input

@@ -12,28 +12,41 @@ if not os.path.exists('data'):
     print('make directory {} is done'.format('./data'))
 
 set_random_seeds(random_seed=777)
-device = device_check()  # device check & define
-# device = torch.device("cpu:0")
+ # device check & define
 def main():
 
     # 1. model generation
+    device = device_check()
     model = torchvision.models.resnet18(pretrained=True)
-    model.fc = nn.Linear(model.fc.in_features, 10)
+    model.fc = nn.Linear(model.fc.in_features, 100)
     model = model.to(device)              # to gpu
     # print(f"model: {model}")              # print model structure
     # summary(model, (3, 224, 224))         # print output shape & total parameter sizes for given input size
 
     # data loader
-    train_loader, test_loader = prepare_dataloader(num_workers=8, train_batch_size=256, eval_batch_size=256)
+    batch_size = 64
+    num_workers = 8
+    train_dataset = datasets.ImageFolder('H:/dataset/imagenet100/train', transform=transforms.Compose([
+                                      transforms.RandomResizedCrop(224),
+                                      transforms.RandomHorizontalFlip(),
+                                      transforms.ToTensor(),
+                                      transforms.Normalize(mean=[0.485, 0.456, 0.406],std=[0.229, 0.224, 0.225]),]))
+    val_dataset = datasets.ImageFolder('H:/dataset/imagenet100/val', transform=transforms.Compose([
+                                      transforms.Resize(256),
+                                      transforms.CenterCrop(224),
+                                      transforms.ToTensor(),
+                                      transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),]))
+
+    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers, pin_memory=True)
+    test_loader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers, pin_memory=True)
 
     # Train model.
     print("Training Model...")
-    num_epochs = 100
-
-    model_filename = 'resnet18_cifar10'
+    num_epochs = 200
+    model_filename = 'resnet18_imagenet100'
     print(f'model file name : {model_filename}')
 
-    model = train_model(model=model, train_loader=train_loader, test_loader=test_loader, device=device, learning_rate=1e-1, num_epochs=num_epochs)
+    model = train_model(model_filename=model_filename, model=model, train_loader=train_loader, test_loader=test_loader, device=device, learning_rate=1e-1, num_epochs=num_epochs)
 
     save_model(model, f'{model_filename}_e{str(num_epochs)}.pth')
     model = load_model(model, model_filename, device)
@@ -44,17 +57,18 @@ def main():
 def model_onnx_export():
 
     # 1. model generation
+    device = device_check()
     model = torchvision.models.resnet18(pretrained=True)
     model.fc = nn.Linear(model.fc.in_features, 10)
     model = model.to(device)              # to gpu
 
-    model_filename = 'resnet18_cifar10_e100'
+    model_filename = 'resnet_imagenet100_e100'
     model = load_model(model, f'{model_filename}.pth', device)
 
     # enable_onnx_checker needs to be disabled. See notes below.
-    export_model_path = f"model/{model_filename}.onnx"
+    export_model_path = f'model/{model_filename}.onnx'
 
-    dummy_input = torch.randn(256, 3, 32, 32, device=device)
+    dummy_input = torch.randn(1, 3, 224, 224, device=device)
 
     torch.onnx.export(model,  # pytorch model
                       dummy_input,  # model dummy input

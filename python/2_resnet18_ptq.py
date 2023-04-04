@@ -67,7 +67,7 @@ model.fc = nn.Linear(model.fc.in_features, 10)
 train_loader, test_loader = prepare_dataloader(num_workers=0, train_batch_size=256, eval_batch_size=256)
 
 # weight load
-model_filename = 'resnet_cifar10_e100.pth'
+model_filename = 'resnet18_cifar10_e100.pth'
 model = load_model(model, model_filename, device)
 model = model.to(device)  # to gpu
 model.eval()
@@ -90,7 +90,7 @@ with torch.no_grad():
     print("=================================================")
 
     # Save the model
-    torch.save(model.state_dict(), f"model/resnet_cifar10_e100_{method}.pth")
+    torch.save(model.state_dict(), f"model/resnet18_cifar10_e100_{method}.pth")
     for method in ["mse", "entropy"]:
         compute_amax(model, method=method)
         print(f"{method} calibration")
@@ -99,4 +99,4 @@ with torch.no_grad():
         print("Eval Loss: {:.3f} Eval Acc: {:.3f}".format(eval_loss, eval_accuracy))
         print("=================================================")
         # Save the model
-        torch.save(model.state_dict(), f"model/resnet_cifar10_e100_{method}.pth")
+        torch.save(model.state_dict(), f"model/resnet18_cifar10_e100_{method}.pth")

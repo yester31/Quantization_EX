@@ -130,7 +130,7 @@ def prepare_dataloader(num_workers=8,
 
 
 
-def train_model(model, train_loader, test_loader, device, learning_rate=1e-1, num_epochs=200):
+def train_model(model_filename, model, train_loader, test_loader, device, learning_rate=1e-1, num_epochs=200):
     # The training configurations were not carefully selected.
     criterion = nn.CrossEntropyLoss()
     model.to(device)
@@ -145,6 +145,8 @@ def train_model(model, train_loader, test_loader, device, learning_rate=1e-1, nu
     model.eval()
     eval_loss, eval_accuracy = evaluate_model(model=model,test_loader=test_loader, device=device, criterion=criterion)
     print("Epoch: {:03d} Eval Loss: {:.3f} Eval Acc: {:.3f}".format(0, eval_loss, eval_accuracy))
+
+    best_acc = 0.00001
 
     for epoch in range(num_epochs):
 
@@ -179,6 +181,10 @@ def train_model(model, train_loader, test_loader, device, learning_rate=1e-1, nu
         # Evaluation
         model.eval()
         eval_loss, eval_accuracy = evaluate_model(model=model, test_loader=test_loader, device=device, criterion=criterion)
+
+        if best_acc < eval_accuracy:
+            best_acc = eval_accuracy
+            save_model(model, f'{model_filename}_e{str(epoch)}_best.pth')
 
         # Set learning rate scheduler
         scheduler.step()
