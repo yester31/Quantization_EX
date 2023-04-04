@@ -1,6 +1,7 @@
-# by yhpark 2023-04-01
-# resnet18 cifar10 dataset train example
+# by yhpark 2023-04-04
+# resnet18 imagenet100 dataset train example
 # https://github.com/leimao/PyTorch-Quantization-Aware-Training/blob/main/cifar.py
+# https://www.kaggle.com/datasets/ambityga/imagenet100?select=Labels.json
 from utils import *
 
 if not os.path.exists('model'):
