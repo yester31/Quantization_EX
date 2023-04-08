@@ -128,9 +128,11 @@ def prepare_dataloader(num_workers=8,
 
     return train_loader, test_loader
 
+from datetime import datetime
 
 
 def train_model(model_filename, model, train_loader, test_loader, device, learning_rate=1e-1, num_epochs=200):
+
     # The training configurations were not carefully selected.
     criterion = nn.CrossEntropyLoss()
     model.to(device)
@@ -144,7 +146,7 @@ def train_model(model_filename, model, train_loader, test_loader, device, learni
     # Evaluation
     model.eval()
     eval_loss, eval_accuracy = evaluate_model(model=model,test_loader=test_loader, device=device, criterion=criterion)
-    print("Epoch: {:03d} Eval Loss: {:.3f} Eval Acc: {:.3f}".format(0, eval_loss, eval_accuracy))
+    print("[{}] Epoch: {:03d} Eval Loss: {:.3f} Eval Acc: {:.3f}".format(datetime.now().strftime("%Y-%m-%d %H:%M:%S"), 0, eval_loss, eval_accuracy))
 
     best_acc = 0.00001
 
@@ -184,13 +186,14 @@ def train_model(model_filename, model, train_loader, test_loader, device, learni
 
         if best_acc < eval_accuracy:
             best_acc = eval_accuracy
-            save_model(model, f'{model_filename}_e{str(epoch)}_best.pth')
+            save_model(model, f'{model_filename}_best.pth')
+            print(f'save best {model_filename} model weight, epoch : {str(epoch)}')
 
         # Set learning rate scheduler
         scheduler.step()
 
-        print("Epoch: {:03d} Train Loss: {:.3f} Train Acc: {:.3f} Eval Loss: {:.3f} Eval Acc: {:.3f}"
-            .format(epoch + 1, train_loss, train_accuracy, eval_loss, eval_accuracy))
+        print("[{}] Epoch: {:03d} Train Loss: {:.3f} Train Acc: {:.3f} Eval Loss: {:.3f} Eval Acc: {:.3f}"
+            .format(datetime.now().strftime("%Y-%m-%d %H:%M:%S"), epoch + 1, train_loss, train_accuracy, eval_loss, eval_accuracy))
 
     return model
 
