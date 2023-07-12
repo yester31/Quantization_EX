@@ -1,5 +1,8 @@
 data
 model
+checkpoints
+*.pth
+*.tar
 
 .vs
 Engine

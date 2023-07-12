@@ -4,9 +4,9 @@
 ### 0. Introduction
 - Goal : Quantization Model PTQ & QAT
 - Process : 
-  1. Pytorch model (model train) 
-  2. Pytorch Quantization model (calibration), ptq
-  3. Pytorch Quantization model (fine tuning), qat
+  1. Pytorch model train with custom dataset 
+  2. Pytorch Quantization model calibration for ptq
+  3. Pytorch Quantization model fine tuning for qat
   4. Generation TensorRT int8 model
 - Sample Model : Resnet18 
 - Dataset : imagenet100
@@ -18,37 +18,24 @@
   - CPU i7-11375H
   - GPU RTX-3060
 - Dependency 
-  - cuda 11.4.1
-  - cudnn 8.4.1
-  - tensorrt 8.4.3.1
-  - pytorch 1.13.1+cu117
-  - onnx 1.13.1
+  - cuda 12.1
+  - cudnn 8.9.2
+  - tensorrt 8.6.1
+  - pytorch 2.1.0+cu121
 
 ---
 
 ### 2. Code Scheme
 ```
-    Pytorch_Quantization_EX/
-    ├── data/                         # binary input data & outputs data
-    ├── python/
-    │   ├─ data/                      # for cifar10 dataset
-    │   ├─ model/                     # onnx, pth, wts files
-    │   ├─ 1_resnet18_train.py        # resnet18 cifar10 data train code
-    │   ├─ 2_resnet18_ptq.py
-    │   ├─ 3_resnet18_qat.py
-    │   ├─ 4_onnx_export.py           # make onnx for TRT
-    │   ├─ 5_valid.py
-    │   └─ utils.py                   # custom util functions
-    ├── TensorRT_ONNX/ 
-    │   ├─ Engine/                    # engine file 
-    │   ├─ TensorRT_ONNX/
-    │   │   ├─ calibrator.cpp         # for ptq
-    │   │   ├─ calibrator.hpp
-    │   │   ├─ logging.hpp
-    │   │   ├─ main.cpp               # main code
-    │   │   ├─ utils.cpp              # custom util functions
-    │   │   └─ utils.hpp
-    │   └─ TensorRT_ONNX.sln
+    Quantization_EX/
+    ├── common.py           # utils for TensorRT
+    ├── infer.py            # base model infer
+    ├── ptq.py              # Post Train Quantization
+    ├── quant_utils.py      # utils for quantization
+    ├── qat.py              # Quantization Aware Training
+    ├── train.py            # base model train
+    ├── trt_infer.py        # TensorRT model infer
+    ├── utils.py            # utils
     ├── LICENSE
     └── README.md
 ```
@@ -56,7 +43,7 @@
 ---
 
 ### 3. Performance Evaluation
-- Comparison of calculation average execution time of 40 iteration and FPS, GPU memory usage for input [256,3,32,32]
+- Calculation 10000 iteration with one input data [1, 3, 224, 224]
 <!-- 
 <table border="0"  width="100%">
 	<tbody align="center">
@@ -93,5 +80,10 @@
 	</tbody>
 </table> -->
 
+### 4. Guide
+- infer -> train -> ptq -> qat -> trt_infer
 
-https://github.com/NVIDIA/TensorRT/tree/master/tools/pytorch-quantization
+### 5. Reference
+* pytorch-quantization : <https://github.com/NVIDIA/TensorRT/tree/master/tools/pytorch-quantization>
+* imagenet100 : <https://www.kaggle.com/datasets/ambityga/imagenet100>
+
