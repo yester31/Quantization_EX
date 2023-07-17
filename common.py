@@ -45,11 +45,15 @@ def GiB(val):
 
 
 def add_help(description):
-    parser = argparse.ArgumentParser(description=description, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser = argparse.ArgumentParser(
+        description=description, formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
     args, _ = parser.parse_known_args()
 
 
-def find_sample_data(description="Runs a TensorRT Python sample", subfolder="", find_files=[], err_msg=""):
+def find_sample_data(
+    description="Runs a TensorRT Python sample", subfolder="", find_files=[], err_msg=""
+):
     """
     Parses sample arguments.
 
@@ -64,7 +68,9 @@ def find_sample_data(description="Runs a TensorRT Python sample", subfolder="", 
 
     # Standard command-line arguments for all samples.
     kDEFAULT_DATA_ROOT = os.path.join(os.sep, "usr", "src", "tensorrt", "data")
-    parser = argparse.ArgumentParser(description=description, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser = argparse.ArgumentParser(
+        description=description, formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
     parser.add_argument(
         "-d",
         "--datadir",
@@ -79,7 +85,13 @@ def find_sample_data(description="Runs a TensorRT Python sample", subfolder="", 
         data_path = os.path.join(data_dir, subfolder)
         if not os.path.exists(data_path):
             if data_dir != kDEFAULT_DATA_ROOT:
-                print("WARNING: " + data_path + " does not exist. Trying " + data_dir + " instead.")
+                print(
+                    "WARNING: "
+                    + data_path
+                    + " does not exist. Trying "
+                    + data_dir
+                    + " instead."
+                )
             data_path = data_dir
         # Make sure data directory exists.
         if not (os.path.exists(data_path)) and data_dir != kDEFAULT_DATA_ROOT:
@@ -122,7 +134,9 @@ def locate_files(data_paths, filenames, err_msg=""):
     for f, filename in zip(found_files, filenames):
         if not f or not os.path.exists(f):
             raise FileNotFoundError(
-                "Could not find {:}. Searched in data paths: {:}\n{:}".format(filename, data_paths, err_msg)
+                "Could not find {:}. Searched in data paths: {:}\n{:}".format(
+                    filename, data_paths, err_msg
+                )
             )
     return found_files
 
@@ -168,7 +182,9 @@ def do_inference(context, bindings, inputs, outputs, stream, batch_size=1):
     # Transfer input data to the GPU.
     [cuda.memcpy_htod_async(inp.device, inp.host, stream) for inp in inputs]
     # Run inference.
-    context.execute_async(batch_size=batch_size, bindings=bindings, stream_handle=stream.handle)
+    context.execute_async(
+        batch_size=batch_size, bindings=bindings, stream_handle=stream.handle
+    )
     # Transfer predictions back from the GPU.
     [cuda.memcpy_dtoh_async(out.host, out.device, stream) for out in outputs]
     # Synchronize the stream

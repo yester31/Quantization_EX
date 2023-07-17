@@ -17,11 +17,11 @@ import torch.utils.data
 from torch.optim.lr_scheduler import StepLR, MultiStepLR
 
 
-
 def genDir(dir_path):
     if not os.path.exists(dir_path):  # 저장할 폴더가 없다면
         os.makedirs(dir_path)  # 폴더 생성
-        print(f'make directory {dir_path} is done')
+        print(f"make directory {dir_path} is done")
+
 
 def load_checkpoint(path, model, device):
     # path = ./xxxx.pth.tar
@@ -31,10 +31,11 @@ def load_checkpoint(path, model, device):
             checkpoint = torch.load(path, map_location=device)
         else:
             checkpoint = torch.load(path)
-        model.load_state_dict(checkpoint['state_dict'])
+        model.load_state_dict(checkpoint["state_dict"])
         print(f"=> loaded checkpoint {path}")
     else:
         print(f"=> no checkpoint found at {path}")
+
 
 def set_random_seeds(random_seed=0):
     torch.manual_seed(random_seed)
@@ -46,22 +47,22 @@ def set_random_seeds(random_seed=0):
 
 def device_check():
     print("pytorch:", torch.__version__)
-    print('[Device Check]')
+    print("[Device Check]")
     if torch.cuda.is_available():
-        print(f'Torch gpu available : {torch.cuda.is_available()}')
-        print(f'The number of gpu device : {torch.cuda.device_count()}')
+        print(f"Torch gpu available : {torch.cuda.is_available()}")
+        print(f"The number of gpu device : {torch.cuda.device_count()}")
         for g_idx in range(torch.cuda.device_count()):
-            print(f'{g_idx} device name : {torch.cuda.get_device_name(g_idx)}')
+            print(f"{g_idx} device name : {torch.cuda.get_device_name(g_idx)}")
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu:0")
     print(f"device : {device} is available")
     return device
 
 
 def save_checkpoint(state, is_best, model_name):
-    filename = f'./checkpoints/checkpoint_{model_name}.pth.tar'
+    filename = f"./checkpoints/checkpoint_{model_name}.pth.tar"
     torch.save(state, filename)
     if is_best:
-        shutil.copyfile(filename, f'./checkpoints/model_best_{model_name}.pth.tar')
+        shutil.copyfile(filename, f"./checkpoints/model_best_{model_name}.pth.tar")
 
 
 class Summary(Enum):
@@ -74,7 +75,7 @@ class Summary(Enum):
 class AverageMeter(object):
     """Computes and stores the average and current value"""
 
-    def __init__(self, name, fmt=':f', summary_type=Summary.AVERAGE):
+    def __init__(self, name, fmt=":f", summary_type=Summary.AVERAGE):
         self.name = name
         self.fmt = fmt
         self.summary_type = summary_type
@@ -105,21 +106,21 @@ class AverageMeter(object):
         self.avg = self.sum / self.count
 
     def __str__(self):
-        fmtstr = '{name} {val' + self.fmt + '} ({avg' + self.fmt + '})'
+        fmtstr = "{name} {val" + self.fmt + "} ({avg" + self.fmt + "})"
         return fmtstr.format(**self.__dict__)
 
     def summary(self):
-        fmtstr = ''
+        fmtstr = ""
         if self.summary_type is Summary.NONE:
-            fmtstr = ''
+            fmtstr = ""
         elif self.summary_type is Summary.AVERAGE:
-            fmtstr = '{name} {avg:.3f}'
+            fmtstr = "{name} {avg:.3f}"
         elif self.summary_type is Summary.SUM:
-            fmtstr = '{name} {sum:.3f}'
+            fmtstr = "{name} {sum:.3f}"
         elif self.summary_type is Summary.COUNT:
-            fmtstr = '{name} {count:.3f}'
+            fmtstr = "{name} {count:.3f}"
         else:
-            raise ValueError('invalid summary type %r' % self.summary_type)
+            raise ValueError("invalid summary type %r" % self.summary_type)
 
         return fmtstr.format(**self.__dict__)
 
@@ -133,17 +134,17 @@ class ProgressMeter(object):
     def display(self, batch):
         entries = [self.prefix + self.batch_fmtstr.format(batch)]
         entries += [str(meter) for meter in self.meters]
-        print('\t'.join(entries))
+        print("\t".join(entries))
 
     def display_summary(self):
         entries = [" *"]
         entries += [meter.summary() for meter in self.meters]
-        print(' '.join(entries))
+        print(" ".join(entries))
 
     def _get_batch_fmtstr(self, num_batches):
         num_digits = len(str(num_batches // 1))
-        fmt = '{:' + str(num_digits) + 'd}'
-        return '[' + fmt + '/' + fmt.format(num_batches) + ']'
+        fmt = "{:" + str(num_digits) + "d}"
+        return "[" + fmt + "/" + fmt.format(num_batches) + "]"
 
 
 def accuracy(output, target, topk=(1,)):
@@ -163,17 +164,43 @@ def accuracy(output, target, topk=(1,)):
         return res
 
 
-color_map = [(244, 67, 54), (233, 30, 99), (156, 39, 176), (103, 58, 183), (63, 81, 181), (33, 150, 243), (3, 169, 244),
-             (0, 188, 212), (0, 150, 136), (76, 175, 80)]
+color_map = [
+    (244, 67, 54),
+    (233, 30, 99),
+    (156, 39, 176),
+    (103, 58, 183),
+    (63, 81, 181),
+    (33, 150, 243),
+    (3, 169, 244),
+    (0, 188, 212),
+    (0, 150, 136),
+    (76, 175, 80),
+]
 
-def train(train_loader, model, criterion, optimizer, epoch, device, scaler, use_amp, writer, regularizer=None, print_freq=10):
-    batch_time = AverageMeter('Time', ':6.3f')
-    data_time = AverageMeter('data', ':6.3f')
-    losses = AverageMeter('Loss', ':.4e')
-    top1 = AverageMeter('Acc@1', ':6.2f')
-    top5 = AverageMeter('Acc@5', ':6.2f')
-    progress = ProgressMeter(len(train_loader), [batch_time, data_time, losses, top1, top5],
-                             prefix="Epoch: [{}]".format(epoch))
+
+def train(
+    train_loader,
+    model,
+    criterion,
+    optimizer,
+    epoch,
+    device,
+    scaler,
+    use_amp,
+    writer,
+    regularizer=None,
+    print_freq=10,
+):
+    batch_time = AverageMeter("Time", ":6.3f")
+    data_time = AverageMeter("data", ":6.3f")
+    losses = AverageMeter("Loss", ":.4e")
+    top1 = AverageMeter("Acc@1", ":6.2f")
+    top5 = AverageMeter("Acc@5", ":6.2f")
+    progress = ProgressMeter(
+        len(train_loader),
+        [batch_time, data_time, losses, top1, top5],
+        prefix="Epoch: [{}]".format(epoch),
+    )
     print_freq = len(train_loader) // print_freq
 
     # switch to train mode
@@ -189,8 +216,8 @@ def train(train_loader, model, criterion, optimizer, epoch, device, scaler, use_
         target = target.to(device, non_blocking=True)
 
         # compute output
-        #with torch.autocast(device_type='cuda', dtype=torch.float16, enabled=use_amp):
-        with torch.autocast(device_type='cuda', enabled=use_amp):
+        # with torch.autocast(device_type='cuda', dtype=torch.float16, enabled=use_amp):
+        with torch.autocast(device_type="cuda", enabled=use_amp):
             output = model(images)
             loss = criterion(output, target)
 
@@ -220,18 +247,35 @@ def train(train_loader, model, criterion, optimizer, epoch, device, scaler, use_
         if i % print_freq == 0:  # print_freq(10) 미니 배치 마다 출력
             progress.display(i + 1)
             writer.add_scalar("Loss/train", losses.val, epoch * len(train_loader) + i)
-            writer.add_scalar("Acc(top1)/train", int(top1.val), epoch * len(train_loader) + i)
-            writer.add_scalar("Acc(top5)/train", top5.val, epoch * len(train_loader) + i)
+            writer.add_scalar(
+                "Acc(top1)/train", int(top1.val), epoch * len(train_loader) + i
+            )
+            writer.add_scalar(
+                "Acc(top5)/train", top5.val, epoch * len(train_loader) + i
+            )
             writer.close()
 
 
-def validate(val_loader, model, criterion, epoch, device, class_to_idx, classes, writer, class_acc=True, print_freq=10):
-    batch_time = AverageMeter('Time', ':6.3f', Summary.NONE)
-    losses = AverageMeter('Loss', ':.4e', Summary.NONE)
-    top1 = AverageMeter('Acc@1', ':6.2f', Summary.AVERAGE)
-    top5 = AverageMeter('Acc@5', ':6.2f', Summary.AVERAGE)
+def validate(
+    val_loader,
+    model,
+    criterion,
+    epoch,
+    device,
+    class_to_idx,
+    classes,
+    writer,
+    class_acc=True,
+    print_freq=10,
+):
+    batch_time = AverageMeter("Time", ":6.3f", Summary.NONE)
+    losses = AverageMeter("Loss", ":.4e", Summary.NONE)
+    top1 = AverageMeter("Acc@1", ":6.2f", Summary.AVERAGE)
+    top5 = AverageMeter("Acc@5", ":6.2f", Summary.AVERAGE)
 
-    progress = ProgressMeter(len(val_loader), [batch_time, losses, top1, top5], prefix='Validate: ')
+    progress = ProgressMeter(
+        len(val_loader), [batch_time, losses, top1, top5], prefix="Validate: "
+    )
     print_freq = len(val_loader) // print_freq
 
     # switch to evaluate mode
@@ -290,9 +334,10 @@ def validate(val_loader, model, criterion, epoch, device, class_to_idx, classes,
                 else:
                     acc = 100 * float(correct_count) / total_pred[classname]
                 print(
-                    f'[{class_to_idx[classname]}]Accuracy for {classname:5s} : {acc:.1f} %, ({correct_count}/{total_pred[classname]})')
+                    f"[{class_to_idx[classname]}]Accuracy for {classname:5s} : {acc:.1f} %, ({correct_count}/{total_pred[classname]})"
+                )
             acc = 100 * float(total_correct) / total_count
-            print(f'Total Accuracy : {acc:.1f} %, ({total_correct}/{total_count})')
+            print(f"Total Accuracy : {acc:.1f} %, ({total_correct}/{total_count})")
 
     progress.display_summary()
     writer.add_scalar("Loss/valid", losses.avg, epoch)
@@ -302,13 +347,17 @@ def validate(val_loader, model, criterion, epoch, device, class_to_idx, classes,
     return top1.avg
 
 
-def test(val_loader, model, device, class_to_idx, classes, class_acc =True, print_freq=10):
-    batch_time = AverageMeter('Time', ':6.3f', Summary.NONE)
-    losses = AverageMeter('Loss', ':.4e', Summary.NONE)
-    top1 = AverageMeter('Acc@1', ':6.2f', Summary.AVERAGE)
-    top5 = AverageMeter('Acc@5', ':6.2f', Summary.AVERAGE)
+def test(
+    val_loader, model, device, class_to_idx, classes, class_acc=True, print_freq=10
+):
+    batch_time = AverageMeter("Time", ":6.3f", Summary.NONE)
+    losses = AverageMeter("Loss", ":.4e", Summary.NONE)
+    top1 = AverageMeter("Acc@1", ":6.2f", Summary.AVERAGE)
+    top5 = AverageMeter("Acc@5", ":6.2f", Summary.AVERAGE)
 
-    progress = ProgressMeter(len(val_loader), [batch_time, losses, top1, top5], prefix='Test: ')
+    progress = ProgressMeter(
+        len(val_loader), [batch_time, losses, top1, top5], prefix="Test: "
+    )
     print_freq = len(val_loader) // print_freq
     # switch to evaluate mode
     model.eval()
@@ -346,12 +395,13 @@ def test(val_loader, model, device, class_to_idx, classes, class_acc =True, prin
             if i % print_freq == 0:
                 progress.display(i + 1)
 
-        print(f'batch_size : {val_loader.batch_size} ')
-        print(f'Average fps : {1 / (dur_time / (count * val_loader.batch_size))} [fps]')
-        print(f'Average inference time : {(dur_time / (count * val_loader.batch_size)) * 1000} [msec]')
+        print(f"batch_size : {val_loader.batch_size} ")
+        print(f"Average fps : {1 / (dur_time / (count * val_loader.batch_size))} [fps]")
+        print(
+            f"Average inference time : {(dur_time / (count * val_loader.batch_size)) * 1000} [msec]"
+        )
 
         if class_acc:
-
             correct_pred = {classname: 0 for classname in classes}
             total_pred = {classname: 0 for classname in classes}
 
@@ -377,9 +427,10 @@ def test(val_loader, model, device, class_to_idx, classes, class_acc =True, prin
                 else:
                     acc = 100 * float(correct_count) / total_pred[classname]
                 print(
-                    f'[{class_to_idx[classname]}]Accuracy for {classname:5s} : {acc:.1f} %, ({correct_count}/{total_pred[classname]})')
+                    f"[{class_to_idx[classname]}]Accuracy for {classname:5s} : {acc:.1f} %, ({correct_count}/{total_pred[classname]})"
+                )
             acc = 100 * float(total_correct) / total_count
-            print(f'Total Accuracy : {acc:.1f} %, ({total_correct}/{total_count})')
+            print(f"Total Accuracy : {acc:.1f} %, ({total_correct}/{total_count})")
 
     progress.display_summary()
 

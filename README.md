@@ -5,9 +5,10 @@
 - Goal : Quantization Model PTQ & QAT
 - Process : 
   1. Pytorch model train with custom dataset 
-  2. Pytorch Quantization model calibration for ptq
-  3. Pytorch Quantization model fine tuning for qat
-  4. Generation TensorRT int8 model
+  2. Pytorch-Quantization model calibration for ptq
+  3. Pytorch-Quantization model fine tuning for qat
+  4. Generation TensorRT int8 model from Pytorch-Quantization model
+  4. Generation TensorRT int8 model using tensorrt calibration class
 - Sample Model : Resnet18 
 - Dataset : imagenet100
 ---

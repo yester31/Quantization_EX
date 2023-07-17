@@ -6,10 +6,6 @@ import os
 import torchvision.transforms as transforms
 from PIL import Image
 
-# Wrapper for cudaMemcpy which infers copy size and does error checking
-def memcpy_host_to_device(device_ptr: int, host_arr: np.ndarray):
-    nbytes = host_arr.size * host_arr.itemsize
-    cuda.cudaMemcpy(device_ptr, host_arr, nbytes, cuda.cudaMemcpyKind.cudaMemcpyHostToDevice)
 
 class EngineCalibrator(trt.IInt8EntropyCalibrator2):
     """
@@ -38,11 +34,16 @@ class EngineCalibrator(trt.IInt8EntropyCalibrator2):
         self.batch_allocation = cuda.mem_alloc(size)
         self.file_list = os.listdir(img_dir)
         self.max_img_size = len(os.listdir(img_dir))
-        self.transform = transforms.Compose([
+        self.transform = transforms.Compose(
+            [
                 transforms.Resize(256),
                 transforms.CenterCrop(224),
                 transforms.ToTensor(),
-                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]), ])
+                transforms.Normalize(
+                    mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+                ),
+            ]
+        )
 
     def get_batch_size(self):
         """
@@ -62,24 +63,24 @@ class EngineCalibrator(trt.IInt8EntropyCalibrator2):
         :return: A list of int-casted memory pointers.
         """
         try:
-            if self.max_img_size - 1 == self.img_count :
+            if self.max_img_size - 1 == self.img_count:
                 print("Finished calibration batches")
                 return None
 
             calib_data_name = self.file_list[self.img_count]
-            calib_data_path = self.img_dir + '/' + calib_data_name
-            print(f'[{self.img_count}] calib data load... {calib_data_path} ')
+            calib_data_path = self.img_dir + "/" + calib_data_name
+            print(f"[{self.img_count}] calib data load... {calib_data_path} ")
             img = Image.open(calib_data_path)
             self.img_count += 1
-            if img.mode == 'RGB':
+            if img.mode == "RGB":
                 tensor = self.transform(img)
                 batch = np.array(tensor, dtype=np.float32, order="C")
                 cuda.memcpy_htod(self.batch_allocation, np.ascontiguousarray(batch))
                 return [int(self.batch_allocation)]
             else:
                 calib_data_name = self.file_list[self.img_count]
-                calib_data_path = self.img_dir + '/' + calib_data_name
-                print(f'[{self.img_count}] calib data load... {calib_data_path} ')
+                calib_data_path = self.img_dir + "/" + calib_data_name
+                print(f"[{self.img_count}] calib data load... {calib_data_path} ")
                 img = Image.open(calib_data_path)
                 self.img_count += 1
                 tensor = self.transform(img)
