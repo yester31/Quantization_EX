@@ -1,8 +1,13 @@
 data
+calib_data
 model
 checkpoints
+logs
 *.pth
 *.tar
+*.onnx
+*.trt
+*.table
 
 .vs
 Engine

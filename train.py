@@ -44,7 +44,7 @@ def main():
 
     # 1. model
     model_name = 'resnet18'
-    model = models.__dict__[model_name]().to(device)
+    model = models.__dict__[model_name](weights='DEFAULT').to(device)
     # 학습 데이터셋의 클래스 수에 맞게 출력값이 생성 되도록 마지막 레이어 수정
     model.fc = nn.Linear(model.fc.in_features, class_count)
     model = model.to(device)
@@ -56,7 +56,7 @@ def main():
 
 
     # 2. train
-    epochs = 10
+    epochs = 20
     writer = SummaryWriter(f'logs/{model_name}')
 
     use_amp = True
@@ -96,7 +96,7 @@ def main():
 
         if is_best:
             filename = f'./checkpoints/{model_name}.pth.tar'
-            torch.save(model, filename)
+            torch.save(model.state_dict(), filename)
 
     writer.close()
 

@@ -1,8 +1,8 @@
 #  by yhpark 2023-07-12
-
+# tensorboard --logdir ./logs
 from quant_utils import *
 from utils import *
-# tensorboard --logdir ./logs
+
 genDir('./ptq_model')
 def main():
     set_random_seeds()
@@ -46,11 +46,10 @@ def main():
     # 학습 데이터셋의 클래스 수에 맞게 출력값이 생성 되도록 마지막 레이어 수정
     if class_count != model.fc.out_features:
         model.fc = nn.Linear(model.fc.in_features, class_count)
-
-    check_path = './checkpoints/model_best_resnet18.pth.tar'
-    checkpoint = torch.load(check_path, map_location=device)
-    model.load_state_dict(checkpoint['state_dict'])
     model = model.to(device)
+
+    check_path = './checkpoints/resnet18.pth.tar'
+    model.load_state_dict(torch.load(check_path, map_location=device))
     model.eval()
 
     # evaluate model status
@@ -66,16 +65,18 @@ def main():
     print("=================================================")
     # It is a bit slow since we collect histograms on CPU
     with torch.no_grad():
-        collect_stats(model, train_loader, num_batches=16)
-
+        collect_stats(model, train_loader, num_batches=4)
         for method in ["percentile", "mse", "entropy"]:
-            compute_amax(model, method=method)
+            if method == "percentile":
+                compute_amax(model, method=method, percentile=99.99)
+            else:
+                compute_amax(model, method=method)
             print(f"{method} calibration")
             test_acc1 = test(val_loader, model, device, class_to_idx, classes, class_acc=False, print_freq=10)
             print(" Eval Acc: {:.3f}".format( test_acc1))
             print("=================================================")
             # Save the model
-            torch.save(model.state_dict(), f"ptq_model/{model_name}_{method}.pth.tar")
+            torch.save(model.state_dict(), f"ptq_model/{model_name}_{method}_2.pth.tar")
 
 
 if __name__ == '__main__':

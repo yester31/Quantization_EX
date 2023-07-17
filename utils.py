@@ -190,7 +190,7 @@ def train(train_loader, model, criterion, optimizer, epoch, device, scaler, use_
 
         # compute output
         #with torch.autocast(device_type='cuda', dtype=torch.float16, enabled=use_amp):
-        with torch.autocast(device_type='cuda',enabled=use_amp):
+        with torch.autocast(device_type='cuda', enabled=use_amp):
             output = model(images)
             loss = criterion(output, target)
 

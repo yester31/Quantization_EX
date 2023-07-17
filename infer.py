@@ -42,8 +42,14 @@ def main():
 
     # 2. evaluate model
     print("=> Model inference test has started!")
-    check_path = './checkpoints/model_best_resnet18_base.pth.tar'
-    load_checkpoint(check_path, model, device)
+    check_path = './checkpoints/resnet18.pth.tar'
+    if os.path.isfile(check_path):
+        if torch.cuda.is_available():
+            checkpoint = torch.load(check_path, map_location=device)
+        else:
+            checkpoint = torch.load(check_path)
+        model.load_state_dict(checkpoint)
+
     test_acc1 = test(val_loader, model, device, class_to_idx, classes, class_acc=False, print_freq=10)
     print(f"acc after model train : {test_acc1}")
 

@@ -1,9 +1,13 @@
 #  by yhpark 2023-07-12
 # tensorboard --logdir ./logs
+from quant_utils import *
 from utils import *
-genDir('./qat_model')
-genDir('./onnx_model')
 import onnx
+
+genDir('./qat_model')
+
+# import sys
+# sys.path.append("H:/etc/TensorRT/tools/pytorch-quantization/examples/torchvision/models/classification")
 def main():
     set_random_seeds()
     device = device_check()
@@ -43,18 +47,17 @@ def main():
 
     # 1. model
     model_name = 'resnet18'
-    model = models.__dict__[model_name]().to(device)
+    #model = models.__dict__[model_name](pretrained=True, quantize=True).to(device)
+    model = models.__dict__[model_name](pretrained=True).to(device)
     # 학습 데이터셋의 클래스 수에 맞게 출력값이 생성 되도록 마지막 레이어 수정
     if class_count != model.fc.out_features:
         model.fc = nn.Linear(model.fc.in_features, class_count)
+    model = model.to(device)
 
     method = ["percentile", "mse", "entropy"]
-    model_name = f'resnet18_{method[0]}'
+    model_name = f'resnet18_{method[1]}_2'
     check_path = f'./ptq_model/{model_name}.pth.tar'
-    checkpoint = torch.load(check_path, map_location=device)
-    model.load_state_dict(checkpoint['state_dict'])
-    model = model.to(device)
-    model.eval()
+    model.load_state_dict(torch.load(check_path, map_location=device))
 
     # evaluate model status
     if False:
@@ -63,7 +66,7 @@ def main():
 
 
     # 2. train
-    epochs = 3
+    epochs = 5
     writer = SummaryWriter(f'logs/{model_name}')
 
     use_amp = True
@@ -72,9 +75,9 @@ def main():
     # define loss function (criterion), optimizer, and learning rate scheduler
     criterion = nn.CrossEntropyLoss().to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
-    # optimizer = torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.9, weight_decay=1e-4)
-    # optimizer = torch.optim.RMSprop(model.parameters(), lr=0.01)
-    scheduler = StepLR(optimizer, step_size=int(epochs * 0.8), gamma=0.1)
+    # optimizer = torch.optim.SGD(model.parameters(), lr=0.0001, momentum=0.9, weight_decay=1e-4)
+    # optimizer = torch.optim.RMSprop(model.parameters(), lr=0.0001)
+    scheduler = StepLR(optimizer, step_size=2, gamma=0.1)
     #scheduler = MultiStepLR(optimizer, milestones=[int(epochs * 0.4), int(epochs * 0.8)], gamma=0.1)
 
     print("=> Model training has started!")
@@ -104,24 +107,6 @@ def main():
         if is_best:
             filename = f'./qat_model/{model_name}.pth.tar'
             torch.save(model.state_dict(), filename)
-
-            # export onnx model
-            export_model_path = f"./onnx_model/{model_name}.onnx"
-            dummy_input = torch.randn(1, 3, 224, 224, requires_grad=True).to(device)
-
-            with torch.no_grad():
-                torch.onnx.export(model,  # pytorch model
-                                  dummy_input,  # model dummy input
-                                  export_model_path,  # onnx model path
-                                  opset_version=17,  # the version of the opset
-                                  input_names=['input'],  # input name
-                                  output_names=['output'])  # output name
-
-                print("ONNX Model exported at ", export_model_path)
-
-            onnx_model = onnx.load(export_model_path)
-            onnx.checker.check_model(onnx_model)
-            print("ONNX Model check done!")
 
     writer.close()
 
