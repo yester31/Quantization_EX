@@ -32,9 +32,9 @@
     ├── calibrator.py       # calibration class for TensorRT PTQ
     ├── common.py           # utils for TensorRT
     ├── infer.py            # base model infer
-	├── onnx_export.py      # onnx export
+    ├── onnx_export.py      # onnx export
     ├── ptq.py              # Post Train Quantization
-	├── qat.py              # Quantization Aware Training
+    ├── qat.py              # Quantization Aware Training
     ├── quant_utils.py      # utils for quantization
     ├── train.py            # base model train
     ├── trt_infer.py        # TensorRT model infer
@@ -49,48 +49,48 @@
 - Calculation 10000 iteration with one input data [1, 3, 224, 224]
 
 <table border="0"  width="100%">
-	<tbody align="center">
-		<tr>
-			<td></td>
-			<td><strong>TensorRT</strong></td>
-			<td><strong>TensorRT</strong></td>
-			<td><strong>TensorRT PTQ</strong></td>
-			<td><strong>Pytorch-Quantization PTQ</strong></td>
-			<td><strong>Pytorch-Quantization QAT</strong></td>
-		</tr>
-		<tr>
-			<td>Precision</td>
+    <tbody align="center">
+        <tr>
+            <td></td>
+            <td><strong>TensorRT</strong></td>
+            <td><strong>TensorRT</strong></td>
+            <td><strong>TensorRT PTQ</strong></td>
+            <td><strong>Pytorch-Quantization PTQ</strong></td>
+            <td><strong>Pytorch-Quantization QAT</strong></td>
+        </tr>
+        <tr>
+            <td>Precision</td>
             <td>FP32</td>
             <td>FP16</td>
             <td>Int8</td>
             <td>Int8</td>
             <td>Int8</td>
-		</tr>
-		<tr>
-			<td>Avg Latency [ms]</td>
-			<td>  1.188 ms </td>
-			<td>  0.527 ms </td>
-			<td>  0.418 ms </td>
-			<td>  0.566 ms </td>
-			<td>  0.577 ms </td>
-		</tr>
-		<tr>
-			<td>Avg FPS [frame/sec]</td>
-			<td> 841.74 fps </td>
-			<td> 1896.01 fps </td>
-			<td> 2388.33 fps </td>
-			<td> 1764.55 fps </td>
-			<td> 1730.89 fps </td>
-		</tr>
-		<tr>
-			<td>Gpu Memory [MB]</td>
-			<td>  179 MB </td>
-			<td>  135 MB </td> 
-			<td>  123 MB </td>
-			<td>  129 MB </td>
-			<td>  129 MB </td>
-		</tr>
-	</tbody>
+        </tr>
+        <tr>
+            <td>Avg Latency [ms]</td>
+            <td>  1.188 ms </td>
+            <td>  0.527 ms </td>
+            <td>  0.418 ms </td>
+            <td>  0.566 ms </td>
+            <td>  0.577 ms </td>
+        </tr>
+        <tr>
+            <td>Avg FPS [frame/sec]</td>
+            <td> 841.74 fps </td>
+            <td> 1896.01 fps </td>
+            <td> 2388.33 fps </td>
+            <td> 1764.55 fps </td>
+            <td> 1730.89 fps </td>
+        </tr>
+        <tr>
+            <td>Gpu Memory [MB]</td>
+            <td>  179 MB </td>
+            <td>  135 MB </td> 
+            <td>  123 MB </td>
+            <td>  129 MB </td>
+            <td>  129 MB </td>
+        </tr>
+    </tbody>
 </table>
 
 ### 4. Guide
