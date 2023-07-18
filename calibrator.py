@@ -12,13 +12,12 @@ class EngineCalibrator(trt.IInt8EntropyCalibrator2):
     Implements the INT8 Entropy Calibrator 2.
     """
 
-    def __init__(self, TRT_LOGGER, cache_file):
+    def __init__(self, cache_file):
         """
         :param cache_file: The location of the cache file.
         """
         super().__init__()
         self.cache_file = cache_file
-        self.TRT_LOGGER = TRT_LOGGER
         self.batch_allocation = None
         self.batch_size = None
         self.img_dir = None

@@ -37,11 +37,11 @@ def main():
     model.fc = nn.Linear(model.fc.in_features, class_count)
     model = model.to(device)
 
-    MODE = "QAT"
+    MODE = "PTQ"
     if MODE in ["PTQ", "QAT"]:
         quant_nn.TensorQuantizer.use_fb_fake_quant = True
         method = ["percentile", "mse", "entropy"]
-        model_name = f"resnet18_{method[1]}"
+        model_name = f"resnet18_{method[2]}"
         if MODE == "QAT":
             check_path = f"./qat_model/{model_name}.pth.tar"
             model_name = model_name.replace("_", "_qat_")
