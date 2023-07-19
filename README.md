@@ -67,6 +67,14 @@
             <td>Int8</td>
         </tr>
         <tr>
+            <td>Acc Top-1 [%] </td>
+            <td>  83.08  </td>
+            <td>  83.04  </td>
+            <td>  83.12  </td>
+            <td>  83.18  </td>
+            <td>  83.42  </td>
+        </tr>
+        <tr>
             <td>Avg Latency [ms]</td>
             <td>  1.188 ms </td>
             <td>  0.527 ms </td>
@@ -94,7 +102,7 @@
 </table>
 
 ### 4. Guide
-- infer -> train -> ptq -> qat -> onnx_export -> trt_infer
+- infer -> train -> ptq -> qat -> onnx_export -> trt_infer -> trt_infer_acc
 
 ### 5. Reference
 * pytorch-quantization : <https://github.com/NVIDIA/TensorRT/tree/master/tools/pytorch-quantization>

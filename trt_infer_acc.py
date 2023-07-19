@@ -8,7 +8,7 @@ from calibrator import EngineCalibrator
 
 # TRT_LOGGER = trt.Logger(trt.Logger.ERROR)
 TRT_LOGGER = trt.Logger(trt.Logger.INFO)
-TRT_LOGGER.min_severity = trt.Logger.Severity.VERBOSE
+# TRT_LOGGER.min_severity = trt.Logger.Severity.VERBOSE
 genDir("./trt_model")
 
 
@@ -114,7 +114,6 @@ def get_engine(
 
 def main():
     dur_time = 0
-    iteration = 10000
 
     # 1. input
     transform_ = transforms.Compose(
@@ -127,10 +126,14 @@ def main():
     )
     val_dataset = datasets.ImageFolder("H:/dataset/imagenet100/val", transform=transform_)
 
-    test_path = "H:/dataset/imagenet100/val/n02077923/ILSVRC2012_val_00023081.JPEG"
-    img = Image.open(test_path)
-    img = transform_(img).unsqueeze(dim=0)
-    input_host = np.array(img, dtype=np.float32, order="C")
+    val_loader = torch.utils.data.DataLoader(
+        val_dataset,
+        batch_size=256,
+        shuffle=False,
+        num_workers=8,
+        pin_memory=True,
+        sampler=None,
+    )
 
     classes = val_dataset.classes
     class_to_idx = val_dataset.class_to_idx
@@ -141,12 +144,12 @@ def main():
 
     # 2. tensorrt model
     gen_force = False
-    precision = "int8"  # fp32, fp16, int8
-    TORCH_QUANTIZATION = True
-    QUANT_MODE = "PTQ"
+    precision = "fp16"  # fp32, fp16, int8
+    TORCH_QUANTIZATION = False
+    QUANT_MODE = "QAT"
     if TORCH_QUANTIZATION:
         method = ["percentile", "mse", "entropy"]
-        model_name = f"resnet18_{method[2]}"
+        model_name = f"resnet18_{method[1]}"
         if QUANT_MODE == "QAT":
             model_name = model_name.replace("_", "_qat_")
         elif QUANT_MODE == "PTQ":
@@ -164,117 +167,57 @@ def main():
 
     # Do inference with TensorRT
     t_outputs = []
-    with get_engine(
-        onnx_model_path, engine_file_path, precision, TORCH_QUANTIZATION, gen_force
+    with get_engine(onnx_model_path, engine_file_path, precision, TORCH_QUANTIZATION, gen_force
     ) as engine, engine.create_execution_context() as context:
         inputs, outputs, bindings, stream = common.allocate_buffers(engine)
         # Do inference
         # Set host input to the image. The common.do_inference function will copy the input to the GPU before executing.
-        inputs[0].host = input_host
+        iteration = 0
+        t_count = 0
+        for i, (images, targets) in enumerate(val_loader):
+            for idx, one_img in enumerate(images):
+                iteration += 1
+                img = one_img.unsqueeze(dim=0)
+                input_host = np.array(img, dtype=np.float32, order="C")
+                inputs[0].host = input_host
+                target = targets[idx]
 
-        # warm-up
-        for _ in range(100):
-            t_outputs = common.do_inference_v2(
-                context,
-                bindings=bindings,
-                inputs=inputs,
-                outputs=outputs,
-                stream=stream,
-            )
-        torch.cuda.synchronize()
+                begin = time.time()
+                t_outputs = common.do_inference_v2(
+                    context,
+                    bindings=bindings,
+                    inputs=inputs,
+                    outputs=outputs,
+                    stream=stream,
+                )
+                torch.cuda.synchronize()
+                dur = time.time() - begin
+                dur_time += dur
 
-        for i in range(iteration):
-            begin = time.time()
-            t_outputs = common.do_inference_v2(
-                context,
-                bindings=bindings,
-                inputs=inputs,
-                outputs=outputs,
-                stream=stream,
-            )
-            torch.cuda.synchronize()
-            dur = time.time() - begin
-            dur_time += dur
+                t_outputs = [output.reshape(shape) for output, shape in zip(t_outputs, output_shapes)]
+                max_tensor = torch.from_numpy(t_outputs[0]).max(dim=1)
+                max_value = max_tensor[0].cpu().data.numpy()[0]
+                max_index = max_tensor[1].cpu().data.numpy()[0]
 
-    # Before doing post-processing, we need to reshape the outputs as the common.do_inference will give us flat arrays.
-    t_outputs = [output.reshape(shape) for output, shape in zip(t_outputs, output_shapes)]
+                if max_index == target:
+                    t_count += 1
+
+        acc1 = (t_count / iteration) * 100
+        print(f"acc1 : {acc1}")
 
     # 3. results
-    if TORCH_QUANTIZATION:
-        print(f"Using Pytorch Quantization [{QUANT_MODE}] mode.")
-    else:
-        if precision == "int8":
-            print(f"Using TensorRT PTQ mode.")
 
     print(engine_file_path)
     print(f"Using precision {precision} mode.")
     print(f"{iteration}th iteration time : {dur_time} [sec]")
     print(f"Average fps : {1/(dur_time/iteration)} [fps]")
     print(f"Average inference time : {(dur_time/iteration) * 1000} [msec]")
-    max_tensor = torch.from_numpy(t_outputs[0]).max(dim=1)
-    max_value = max_tensor[0].cpu().data.numpy()[0]
-    max_index = max_tensor[1].cpu().data.numpy()[0]
-    print(f"max index : {max_index}, value : {max_value}, class name : {classes[max_index]} {class_name.get(classes[max_index])}")
-
+    # max_tensor = torch.from_numpy(t_outputs[0]).max(dim=1)
+    # max_value = max_tensor[0].cpu().data.numpy()[0]
+    # max_index = max_tensor[1].cpu().data.numpy()[0]
+    # print(f"max index : {max_index}, value : {max_value}, class name : {classes[max_index]} {class_name.get(classes[max_index])}")
+    #
 
 
 if __name__ == "__main__":
     main()
-
-
-# Using precision fp32 mode.
-# 10000th iteration time : 12.061801433563232 [sec]
-# Average fps : 829.0635569720082 [fps]
-# Average inference time : 1.2061801433563233 [msec]
-# Resnet18 max index : 99 , value : 21.666141510009766, class name : n02077923 sea lion
-
-# Using precision fp16 mode.
-# 10000th iteration time : 5.546254873275757 [sec]
-# Average fps : 1803.0184743554257 [fps]
-# Average inference time : 0.5546254873275757 [msec]
-# Resnet18 max index : 99 , value : 21.66958236694336, class name : n02077923 sea lion
-
-# Using TensorRT PTQ mode. with calibration data from coco dataset
-# trt_model/resnet18.trt
-# Using precision int8 mode.
-# 10000th iteration time : 4.211785316467285 [sec]
-# Average fps : 2374.2900572120543 [fps]
-# Average inference time : 0.4211785316467285 [msec]
-# max index : 99, value : 19.75248146057129, class name : n02077923 sea lion
-
-# Using TensorRT PTQ mode. with calibration data from imagenet dataset
-# trt_model/resnet18.trt
-# Using precision int8 mode.
-# 10000th iteration time : 4.193108558654785 [sec]
-# Average fps : 2384.865514478394 [fps]
-# Average inference time : 0.4193108558654785 [msec]
-# max index : 99, value : 21.4094295501709, class name : n02077923 sea lion
-
-
-# Using Pytorch Quantization [QAT] mode.
-# Using precision int8 mode.
-# 10000th iteration time : 5.898566961288452 [sec]
-# Average fps : 1695.3270286882785 [fps]
-# Average inference time : 0.5898566961288453 [msec]
-# Resnet18 max index : 99 , value : 21.456743240356445, class name : n02077923 sea lion
-
-# Using Pytorch Quantization [QAT2] mode.
-# Using precision int8 mode.
-# 10000th iteration time : 5.852148056030273 [sec]
-# Average fps : 1708.774266176609 [fps]
-# Average inference time : 0.5852148056030273 [msec]
-# Resnet18 max index : 99 , value : 23.088726043701172, class name : n02077923 sea lion
-
-# Using Pytorch Quantization [PTQ] mode.
-# Using precision int8 mode.
-# 10000th iteration time : 5.982958793640137 [sec]
-# Average fps : 1671.4138179641088 [fps]
-# Average inference time : 0.5982958793640136 [msec]
-# Resnet18 max index : 99 , value : 22.055187225341797, class name : n02077923 sea lion
-
-# Using Pytorch Quantization [PTQ2] mode.
-# Using precision int8 mode.
-# 10000th iteration time : 5.745854139328003 [sec]
-# Average fps : 1740.3852860715906 [fps]
-# Average inference time : 0.5745854139328003 [msec]
-# Resnet18 max index : 99 , value : 21.805843353271484, class name : n02077923 sea lion
