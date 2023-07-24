@@ -6,9 +6,6 @@ import onnx
 
 genDir("./qat_model")
 
-
-# import sys
-# sys.path.append("H:/etc/TensorRT/tools/pytorch-quantization/examples/torchvision/models/classification")
 def main():
     set_random_seeds()
     device = device_check()
@@ -81,8 +78,12 @@ def main():
         model.fc = nn.Linear(model.fc.in_features, class_count)
     model = model.to(device)
 
+    bn_folding = True
+    if bn_folding:
+        model = fuse_bn_recursively(model)
+
     method = ["percentile", "mse", "entropy"]
-    model_name = f"resnet18_{method[1]}_2"
+    model_name = f"resnet18_{method[1]}_4"
     check_path = f"./ptq_model/{model_name}.pth.tar"
     model.load_state_dict(torch.load(check_path, map_location=device))
 

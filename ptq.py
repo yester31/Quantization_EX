@@ -79,6 +79,11 @@ def main():
 
     check_path = "./checkpoints/resnet18.pth.tar"
     model.load_state_dict(torch.load(check_path, map_location=device))
+
+    bn_folding = True
+    if bn_folding:
+        model = fuse_bn_recursively(model)
+
     model.eval()
 
     # evaluate model status
@@ -116,7 +121,7 @@ def main():
             print(" Eval Acc: {:.3f}".format(test_acc1))
             print("=================================================")
             # Save the model
-            torch.save(model.state_dict(), f"ptq_model/{model_name}_{method}_2.pth.tar")
+            torch.save(model.state_dict(), f"ptq_model/{model_name}_{method}_4.pth.tar")
 
 
 if __name__ == "__main__":

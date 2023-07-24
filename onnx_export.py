@@ -37,26 +37,30 @@ def main():
     model.fc = nn.Linear(model.fc.in_features, class_count)
     model = model.to(device)
 
-    #MODE = "PTQ"
-    MODE = "nn"
+    MODE = "PTQ"
     if MODE in ["PTQ", "QAT"]:
         quant_nn.TensorQuantizer.use_fb_fake_quant = True
         method = ["percentile", "mse", "entropy"]
-        model_name = f"resnet18_{method[2]}"
+        model_name = f"resnet18_{method[1]}"
         if MODE == "QAT":
             check_path = f"./qat_model/{model_name}.pth.tar"
             model_name = model_name.replace("_", "_qat_")
         elif MODE == "PTQ":
             check_path = f"./ptq_model/{model_name}.pth.tar"
             model_name = model_name.replace("_", "_ptq_")
-        model_name += "_2"
+        model_name += "_4"
     else:
         check_path = "./checkpoints/resnet18.pth.tar"
 
     model.load_state_dict(torch.load(check_path, map_location=device))
+
+    bn_folding = True
+    if bn_folding:
+        model = fuse_bn_recursively(model)
+
     model.eval()
     # evaluate model status
-    if False:
+    if True:
         print(f"model: {model}")  # print model structure
         summary(
             model, (3, 224, 224)
@@ -74,6 +78,7 @@ def main():
             opset_version=17,  # the version of the opset
             input_names=["input"],  # input name
             output_names=["output"],
+            do_constant_folding=True
         )  # output name
 
         print("ONNX Model exported at ", export_model_path)
@@ -82,12 +87,13 @@ def main():
     onnx.checker.check_model(onnx_model)
     print("ONNX Model check done!")
 
-    if 0:
+    if 1:
         sim_model_path = f"./onnx_model/{model_name}_sim.onnx"
         model_simp, check = simplify(onnx_model)  # convert(simplify)
         onnx.save(model_simp, sim_model_path)
         model_simp = onnx.load(sim_model_path)
         onnx.checker.check_model(model_simp)
+        print("ONNX Model exported at ", sim_model_path)
         print("sim ONNX Model check done!")
 
 

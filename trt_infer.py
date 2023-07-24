@@ -157,23 +157,23 @@ def main():
 
     # 2. tensorrt model
     gen_force = False
-    precision = "fp16"  # fp32, fp16, int8
-    TORCH_QUANTIZATION = False
+    precision = "int8"  # fp32, fp16, int8
+    TORCH_QUANTIZATION = True
     QUANT_MODE = "PTQ"
     if TORCH_QUANTIZATION:
         method = ["percentile", "mse", "entropy"]
-        model_name = f"resnet18_{method[2]}"
+        model_name = f"resnet18_{method[1]}"
         if QUANT_MODE == "QAT":
             model_name = model_name.replace("_", "_qat_")
         elif QUANT_MODE == "PTQ":
             model_name = model_name.replace("_", "_ptq_")
-        model_name += "_2"
+        model_name += "_4"
         precision = "int8"
     else:
         model_name = "resnet18"
-        # model_name = "resnet18_1_pruned"
+        model_name = "resnet18_1_pruned"
 
-    onnx_sim = False
+    onnx_sim = True
     if onnx_sim:
         model_name += "_sim"
 

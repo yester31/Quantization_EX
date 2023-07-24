@@ -145,8 +145,8 @@ def main():
     # 2. tensorrt model
     gen_force = False
     precision = "fp16"  # fp32, fp16, int8
-    TORCH_QUANTIZATION = False
-    QUANT_MODE = "QAT"
+    TORCH_QUANTIZATION = True
+    QUANT_MODE = "PTQ"
     if TORCH_QUANTIZATION:
         method = ["percentile", "mse", "entropy"]
         model_name = f"resnet18_{method[1]}"
@@ -154,7 +154,7 @@ def main():
             model_name = model_name.replace("_", "_qat_")
         elif QUANT_MODE == "PTQ":
             model_name = model_name.replace("_", "_ptq_")
-        model_name += "_2"
+        model_name += "_4"
         precision = "int8"
     else:
         model_name = "resnet18"
@@ -212,12 +212,6 @@ def main():
     print(f"{iteration}th iteration time : {dur_time} [sec]")
     print(f"Average fps : {1/(dur_time/iteration)} [fps]")
     print(f"Average inference time : {(dur_time/iteration) * 1000} [msec]")
-    # max_tensor = torch.from_numpy(t_outputs[0]).max(dim=1)
-    # max_value = max_tensor[0].cpu().data.numpy()[0]
-    # max_index = max_tensor[1].cpu().data.numpy()[0]
-    # print(f"max index : {max_index}, value : {max_value}, class name : {classes[max_index]} {class_name.get(classes[max_index])}")
-    #
-
 
 if __name__ == "__main__":
     main()

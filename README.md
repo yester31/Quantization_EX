@@ -52,16 +52,20 @@
     <tbody align="center">
         <tr>
             <td></td>
-            <td><strong>TensorRT</strong></td>
-            <td><strong>TensorRT</strong></td>
-            <td><strong>TensorRT PTQ</strong></td>
-            <td><strong>Pytorch-Quantization PTQ</strong></td>
-            <td><strong>Pytorch-Quantization QAT</strong></td>
+            <td><strong>TRT</strong></td>
+            <td><strong>TRT</strong></td>
+            <td><strong>TRT PTQ</strong></td>
+            <td><strong>PT-Q PTQ</strong></td>
+            <td><strong>PT-Q PTQ w bnf </strong></td>
+            <td><strong>PT-Q QAT</strong></td>
+            <td><strong>PT-Q QAT w bnf </strong></td>
         </tr>
         <tr>
             <td>Precision</td>
             <td>FP32</td>
             <td>FP16</td>
+            <td>Int8</td>
+            <td>Int8</td>
             <td>Int8</td>
             <td>Int8</td>
             <td>Int8</td>
@@ -72,7 +76,9 @@
             <td>  83.04  </td>
             <td>  83.12  </td>
             <td>  83.18  </td>
+            <td>  82.64  </td>
             <td>  83.42  </td>
+            <td>  82.80  </td>
         </tr>
         <tr>
             <td>Avg Latency [ms]</td>
@@ -80,7 +86,9 @@
             <td>  0.527 ms </td>
             <td>  0.418 ms </td>
             <td>  0.566 ms </td>
+            <td>  0.545 ms </td>
             <td>  0.577 ms </td>
+            <td>  0.534 ms </td>
         </tr>
         <tr>
             <td>Avg FPS [frame/sec]</td>
@@ -88,7 +96,9 @@
             <td> 1896.01 fps </td>
             <td> 2388.33 fps </td>
             <td> 1764.55 fps </td>
+            <td> 1834.69 fps </td>
             <td> 1730.89 fps </td>
+            <td> 1870.99 fps </td>
         </tr>
         <tr>
             <td>Gpu Memory [MB]</td>
@@ -97,10 +107,15 @@
             <td>  123 MB </td>
             <td>  129 MB </td>
             <td>  129 MB </td>
+            <td>  129 MB </td>
+            <td>  129 MB </td>
         </tr>
     </tbody>
 </table>
 
+- PT : Ptorch Quantization    
+- TRT : TensorRT
+- bnf : bach normalization folding (conv + bn -> conv')
 ### 4. Guide
 - infer -> train -> ptq -> qat -> onnx_export -> trt_infer -> trt_infer_acc
 
