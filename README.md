@@ -1,5 +1,5 @@
-# Pytorch_Quantization_EX (on progress)
-- Code Refactoring 
+# Pytorch_Quantization_EX 
+
 
 ### 0. Introduction
 - Goal : Quantization Model PTQ & QAT

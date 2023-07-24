@@ -8,7 +8,8 @@ from calibrator import EngineCalibrator
 
 # TRT_LOGGER = trt.Logger(trt.Logger.ERROR)
 TRT_LOGGER = trt.Logger(trt.Logger.INFO)
-TRT_LOGGER.min_severity = trt.Logger.Severity.VERBOSE
+TRT_LOGGER.min_severity = trt.Logger.Severity.INFO
+# TRT_LOGGER.min_severity = trt.Logger.Severity.VERBOSE
 genDir("./trt_model")
 
 
@@ -50,12 +51,18 @@ def get_engine(
             print("Network Description")
             for input in inputs:
                 batch_size = input.shape[0]
-                print(f"Input '{input.name}' with shape {input.shape} and dtype {input.dtype}")
+                print(
+                    f"Input '{input.name}' with shape {input.shape} and dtype {input.dtype}"
+                )
             for output in outputs:
-                print(f"Output '{output.name}' with shape {output.shape} and dtype {output.dtype}")
+                print(
+                    f"Output '{output.name}' with shape {output.shape} and dtype {output.dtype}"
+                )
             assert batch_size > 0
 
-            config.max_workspace_size = 1 << 31  # 29 : 512MiB, 30 : 1024MiB
+            # config.max_workspace_size = 1 << 31  # 29 : 512MiB, 30 : 1024MiB
+            config.set_flag(trt.BuilderFlag.SPARSE_WEIGHTS)
+
             if precision == "fp16":
                 if not builder.platform_has_fast_fp16:
                     print("FP16 is not supported natively on this platform/device")
@@ -75,19 +82,26 @@ def get_engine(
                         print("Using TensorRT PTQ mode.")
                         calib_cache = "./trt_model/cache_table.table"
                         if gen_force:
-                            os.remove(calib_cache)
+                            if os.path.exists(calib_cache):
+                                os.remove(calib_cache)
                         config.int8_calibrator = EngineCalibrator(calib_cache)
                         if not os.path.exists(calib_cache):
                             calib_shape = [batch_size] + list(inputs[0].shape[1:])
                             calib_dtype = trt.nptype(inputs[0].dtype)
-                            config.int8_calibrator.set_calibrator(batch_size, calib_shape, calib_dtype, "./calib_data2")
+                            config.int8_calibrator.set_calibrator(
+                                batch_size, calib_shape, calib_dtype, "./calib_data2"
+                            )
 
             elif precision == "fp32":
                 print("Using FP32 mode.")
             else:
-                raise NotImplementedError(f"Currently hasn't been implemented: {precision}.")
+                raise NotImplementedError(
+                    f"Currently hasn't been implemented: {precision}."
+                )
 
-            print(f"Building an engine from file {onnx_file_path}; this may take a while...")
+            print(
+                f"Building an engine from file {onnx_file_path}; this may take a while..."
+            )
             plan = builder.build_serialized_network(network, config)
             engine = runtime.deserialize_cuda_engine(plan)
             print("Completed creating Engine")
@@ -125,7 +139,9 @@ def main():
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ]
     )
-    val_dataset = datasets.ImageFolder("H:/dataset/imagenet100/val", transform=transform_)
+    val_dataset = datasets.ImageFolder(
+        "H:/dataset/imagenet100/val", transform=transform_
+    )
 
     test_path = "H:/dataset/imagenet100/val/n02077923/ILSVRC2012_val_00023081.JPEG"
     img = Image.open(test_path)
@@ -141,8 +157,8 @@ def main():
 
     # 2. tensorrt model
     gen_force = False
-    precision = "int8"  # fp32, fp16, int8
-    TORCH_QUANTIZATION = True
+    precision = "fp16"  # fp32, fp16, int8
+    TORCH_QUANTIZATION = False
     QUANT_MODE = "PTQ"
     if TORCH_QUANTIZATION:
         method = ["percentile", "mse", "entropy"]
@@ -155,6 +171,11 @@ def main():
         precision = "int8"
     else:
         model_name = "resnet18"
+        # model_name = "resnet18_1_pruned"
+
+    onnx_sim = False
+    if onnx_sim:
+        model_name += "_sim"
 
     onnx_model_path = f"onnx_model/{model_name}.onnx"
     engine_file_path = f"trt_model/{model_name}.trt"
@@ -197,7 +218,9 @@ def main():
             dur_time += dur
 
     # Before doing post-processing, we need to reshape the outputs as the common.do_inference will give us flat arrays.
-    t_outputs = [output.reshape(shape) for output, shape in zip(t_outputs, output_shapes)]
+    t_outputs = [
+        output.reshape(shape) for output, shape in zip(t_outputs, output_shapes)
+    ]
 
     # 3. results
     if TORCH_QUANTIZATION:
@@ -214,8 +237,9 @@ def main():
     max_tensor = torch.from_numpy(t_outputs[0]).max(dim=1)
     max_value = max_tensor[0].cpu().data.numpy()[0]
     max_index = max_tensor[1].cpu().data.numpy()[0]
-    print(f"max index : {max_index}, value : {max_value}, class name : {classes[max_index]} {class_name.get(classes[max_index])}")
-
+    print(
+        f"max index : {max_index}, value : {max_value}, class name : {classes[max_index]} {class_name.get(classes[max_index])}"
+    )
 
 
 if __name__ == "__main__":
@@ -278,3 +302,20 @@ if __name__ == "__main__":
 # Average fps : 1740.3852860715906 [fps]
 # Average inference time : 0.5745854139328003 [msec]
 # Resnet18 max index : 99 , value : 21.805843353271484, class name : n02077923 sea lion
+
+
+# prunning
+# Using precision fp32 mode.
+# 10000th iteration time : 12.801480054855347 [sec]
+# Average fps : 781.1596750648531 [fps]
+# Average inference time : 1.2801480054855345 [msec]
+# max index : 99, value : 12.337376594543457, class name : n02077923 sea lion
+
+
+# Using TensorRT PTQ mode.
+# trt_model/resnet18_1_pruned.trt
+# Using precision int8 mode.
+# 10000th iteration time : 3.88775634765625 [sec]
+# Average fps : 2572.1776535786616 [fps]
+# Average inference time : 0.388775634765625 [msec]
+# max index : 99, value : 18.521718978881836, class name : n02077923 sea lion

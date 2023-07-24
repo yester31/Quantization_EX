@@ -3,7 +3,7 @@
 from quant_utils import *
 from utils import *
 import onnx
-
+from onnxsim import simplify
 genDir("./onnx_model")
 
 
@@ -37,7 +37,8 @@ def main():
     model.fc = nn.Linear(model.fc.in_features, class_count)
     model = model.to(device)
 
-    MODE = "PTQ"
+    #MODE = "PTQ"
+    MODE = "nn"
     if MODE in ["PTQ", "QAT"]:
         quant_nn.TensorQuantizer.use_fb_fake_quant = True
         method = ["percentile", "mse", "entropy"]
@@ -80,6 +81,14 @@ def main():
     onnx_model = onnx.load(export_model_path)
     onnx.checker.check_model(onnx_model)
     print("ONNX Model check done!")
+
+    if 0:
+        sim_model_path = f"./onnx_model/{model_name}_sim.onnx"
+        model_simp, check = simplify(onnx_model)  # convert(simplify)
+        onnx.save(model_simp, sim_model_path)
+        model_simp = onnx.load(sim_model_path)
+        onnx.checker.check_model(model_simp)
+        print("sim ONNX Model check done!")
 
 
 if __name__ == "__main__":
